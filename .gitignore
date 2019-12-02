@@ -1,0 +1,4 @@
+﻿# project files
+/build*/*
+!/build*/.gitkeep
+
