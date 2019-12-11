@@ -52,7 +52,7 @@ int main(){
         writer.print();
         writer.flush();
     }
-
+    
     printf("\n");
     {
         spio::Reader reader("test.sp");

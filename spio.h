@@ -118,7 +118,7 @@ namespace spio {
         void addBin(const std::string &name, const void *data, const int size) {
             _addName(m_buff, name, BIN_NODE);
 
-            _addTxt(m_buff, _string("%d ", size));
+            _addTxt(m_buff, _string("%d,", size));
             _addBin(m_buff, data, size);
             _addTxt(m_buff, "\n");
         }
@@ -246,7 +246,7 @@ namespace spio {
     class _Nest {
 
     private:
-        Writer *writer;
+        Writer * writer;
 
     public:
         _Nest(Writer &writer, const std::string &name) {
@@ -270,7 +270,7 @@ namespace spio {
     //--------------------------------------------------------------------------------
     // node
     //--------------------------------------------------------------------------------
- 
+
     class Node {
         friend class Reader;
 
@@ -289,7 +289,7 @@ namespace spio {
         void *m_ptr;
 
         // child nodes
-        std::vector<Node*> m_cnodes;
+        std::vector<const Node*> m_cnodes;
 
     public:
 
@@ -312,17 +312,17 @@ namespace spio {
             return *this;
         }
 
-        
+
         //--------------------------------------------------------------------------------
         // node
         //--------------------------------------------------------------------------------
 
-        const std::vector<Node*> getCNodes() const {
+        const std::vector<const Node*> getCNodes() const {
             return m_cnodes;
         }
-        
-        const std::vector<Node*> getCNodes(const std::string &name) const {
-            std::vector<Node*> ret;
+
+        const std::vector<const Node*> getCNodes(const std::string &name) const {
+            std::vector<const Node*> ret;
             for (int i = 0; i < m_cnodes.size(); i++) {
                 if (m_cnodes[i]->m_name == name) {
                     ret.push_back(m_cnodes[i]);
@@ -332,7 +332,7 @@ namespace spio {
         }
 
         const Node* getCNode(const int p = 0) const {
-            Node* ret = NULL;
+            const Node* ret = NULL;
             if (p < (int)m_cnodes.size()) {
                 ret = m_cnodes[p];
             }
@@ -340,8 +340,8 @@ namespace spio {
         }
 
         const Node* getCNode(const std::string &name, const int p = 0) const {
-            Node* ret = NULL;
-            const std::vector<Node*> list = getCNodes(name);
+            const Node* ret = NULL;
+            const std::vector<const Node*> list = getCNodes(name);
             if (p < (int)list.size()) {
                 ret = list[p];
             }
@@ -352,7 +352,7 @@ namespace spio {
         //--------------------------------------------------------------------------------
         // data
         //--------------------------------------------------------------------------------
-        
+
         const std::string getTxt(const int p = 0) const {
             std::string ret;
             if (_cnvTxt(ret, p) == false) {
@@ -431,7 +431,7 @@ namespace spio {
             char tok = ',';
             int s = 0;
             int e = (int)src.find_first_of(tok);
-            e = (e > 0) ? e : src.size();
+            e = (e > 0) ? e : (int)src.size();
 
             while (s < src.size()) {
                 std::string sub(src, s, e - s);
@@ -465,13 +465,13 @@ namespace spio {
     //--------------------------------------------------------------------------------
     // reader
     //--------------------------------------------------------------------------------
- 
+
     class Reader {
 
     private:
         // file path
         std::string m_path;
-        
+
         // data buffer
         std::vector<unsigned char> m_buff;
 
@@ -497,7 +497,7 @@ namespace spio {
         // file
         //--------------------------------------------------------------------------------
 
-        bool parse(){
+        bool parse() {
             bool ret = false;
 
             FILE *fp = fopen(m_path.c_str(), "rb");
@@ -507,7 +507,7 @@ namespace spio {
                     fseek(fp, 0L, SEEK_END);
                     size = (size_t)ftell(fp);
                     fseek(fp, 0L, SEEK_SET);
-                 
+
                     m_buff.resize(size);
                 }
 
@@ -613,7 +613,7 @@ namespace spio {
 
                             node.m_ptr = &_getv(pos);
                             node.m_size = atoi(std::string(&_getv(spos), &_getv(pos - 1)).c_str());
-                            
+
                             // data step
                             pos += node.m_size + 1;
                             break;
@@ -649,10 +649,14 @@ namespace spio {
                 const int crnt = indent[i];
                 const int prev = indent[i - 1];
                 if (crnt > prev) {
-                    ptrs.push_back(&m_cnodes[i - 1]);
+                    {
+                        ptrs.push_back(&m_cnodes[i - 1]);
+                    }
                 }
-                else if(crnt < prev){
-                    ptrs.pop_back();
+                else if (crnt < prev) {
+                    for (int i = 0; i < prev - crnt; i++) {
+                        ptrs.pop_back();
+                    }
                 }
                 Node *base = ptrs[crnt];
 
